@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#176b3a">
+<title>Vivasaya Sevai Kanakku</title>
+<style>
+:root{--green:#176b3a;--pale:#eaf6ee;--ink:#173322;--line:#d7e5db;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f8f5;color:var(--ink)}
+header{background:var(--green);color:white;padding:18px 16px;position:sticky;top:0;z-index:3;box-shadow:0 2px 8px #0002}
+header h1{font-size:20px;margin:0 0 4px}header p{margin:0;font-size:12px;opacity:.9}
+main{max-width:850px;margin:auto;padding:14px}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.card,.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 2px 6px #17332208}
+.card small{display:block;color:#52695a;margin-bottom:7px}.card strong{font-size:20px}
+h2{font-size:17px;margin:0 0 12px}
+label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #c8d8ce;border-radius:8px;font-size:16px;background:white;color:#173322}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+button{border:0;border-radius:8px;padding:11px 14px;font-weight:700;font-size:14px;cursor:pointer;background:var(--green);color:white}
+button.secondary{background:#e8f2eb;color:var(--green);border:1px solid #c9dfd0}
+button.danger{background:#fff0ef;color:var(--red);border:1px solid #f1c4c0}
+.summary{background:var(--pale);border-radius:10px;padding:12px;margin-top:12px}
+.summary div{display:flex;justify-content:space-between;gap:10px;padding:4px 0}
+.summary .total{font-size:18px;font-weight:800;border-top:1px solid #b9d9c3;margin-top:5px;padding-top:9px}
+.toolbar{display:flex;gap:8px;margin-bottom:10px}.toolbar input{flex:1;min-width:0}
+.customer{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:9px;background:#fff}
+.customer-top{display:flex;justify-content:space-between;gap:10px}.customer h3{margin:0 0 4px;font-size:16px}.muted{font-size:12px;color:#607466}
+.amounts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:10px}
+.amounts div{background:#f5f8f6;border-radius:7px;padding:8px;font-size:12px}.amounts b{display:block;font-size:14px;margin-top:4px;overflow-wrap:anywhere}
+.badge{font-size:11px;font-weight:800;border-radius:20px;padding:5px 7px;height:max-content;white-space:nowrap}
+.badge.PAID{background:#d8f4e0;color:#116329}.badge.PARTIALLY_PAID{background:#fff0c2;color:#805600}.badge.PENDING{background:#ffe2df;color:#a1241c}
+.hidden{display:none!important}.section-title{margin:18px 0 10px}.empty{text-align:center;color:#66786b;padding:25px}
+footer{text-align:center;color:#77887d;font-size:12px;padding:18px}
+@media(min-width:650px){.cards{grid-template-columns:repeat(4,minmax(0,1fr))}.form-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}}
+@media print{header,.no-print,footer{display:none!important}body{background:white}.panel,.customer{box-shadow:none;border:1px solid #aaa}main{max-width:none;padding:0}.receipt-only{display:block!important}}
+</style>
+</head>
+<body>
+<header><h1>🌾 Vivasaya Sevai Kanakku</h1><p>Offline customer billing & payment book</p></header>
+<main>
+  <section class="cards">
+    <div class="card"><small>Total customers</small><strong id="count">0</strong></div>
+    <div class="card"><small>Total billed</small><strong id="billed">₹0.00</strong></div>
+    <div class="card"><small>Total collected</small><strong id="collected">₹0.00</strong></div>
+    <div class="card"><small>Total pending</small><strong id="pending">₹0.00</strong></div>
+  </section>
+
+  <section class="panel no-print">
+    <h2 id="formTitle">Add Customer / Bill</h2>
+    <form id="customerForm">
+      <input type="hidden" id="editId">
+      <div class="grid">
+        <div><label for="name">Customer name *</label><input id="name" required maxlength="100" autocomplete="name"></div>
+        <div><label for="phone">Contact number *</label><input id="phone" required inputmode="tel" maxlength="20" placeholder="Mobile number"></div>
+        <div><label for="acres">Number of acres *</label><input id="acres" type="number" min="0.01" step="0.01" value="1" required></div>
+        <div><label for="rate">Insurance rate per acre (₹) *</label><input id="rate" type="number" min="0" step="0.01" value="0" required></div>
+        <div><label for="printing">Printing cost (₹)</label><input id="printing" type="number" min="0" step="0.01" value="0"></div>
+        <div><label for="xerox">Xerox cost (₹)</label><input id="xerox" type="number" min="0" step="0.01" value="0"></div>
+        <div><label for="other">Other amount (₹)</label><input id="other" type="number" min="0" step="0.01" value="0"></div>
+        <div><label for="paidNow">Amount paid now (₹)</label><input id="paidNow" type="number" min="0" step="0.01" value="0"></div>
+      </div>
+      <div class="summary" aria-live="polite">
+        <div><span>Insurance total</span><b id="insuranceTotal">₹0.00</b></div>
+        <div><span>Total amount</span><b id="totalAmount">₹0.00</b></div>
+        <div><span>Paid after this entry</span><b id="paidTotal">₹0.00</b></div>
+        <div class="total"><span>Pending amount</span><b id="pendingAmount">₹0.00</b></div>
+        <div><span>Payment status</span><b id="statusText">PENDING</b></div>
+      </div>
+      <div class="actions">
+        <button type="submit" id="saveBtn">Save Customer</button>
+        <button type="button" class="secondary" id="resetBtn">Clear Form</button>
+        <button type="button" class="secondary" id="settingsBtn">Insurance Default</button>
+        <button type="button" class="secondary" id="exportBtn">Export Backup</button>
+        <button type="button" class="secondary" id="importBtn">Import Backup</button>
+        <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+      </div>
+    </form>
+  </section>
+
+  <h2 class="section-title">Customer Records</h2>
+  <div class="toolbar no-print">
+    <input id="search" placeholder="Search name or contact number">
+    <select id="statusFilter" aria-label="Filter status"><option value="ALL">All statuses</option><option value="PENDING">Pending</option><option value="PARTIALLY_PAID">Partially paid</option><option value="PAID">Paid</option></select>
+  </div>
+  <section id="customerList"></section>
+  <section id="receipt" class="panel hidden"></section>
+</main>
+<footer>Vivasaya Sevai Kanakku • Data is stored on this device. Export regular backups.</footer>
+<script>
+const $ = id => document.getElementById(id);
+const STORAGE_KEY = "vivasaya-sevai-kanakku-v1";
+const SETTINGS_KEY = "vivasaya-sevai-settings-v1";
+let customers = safeParse(localStorage.getItem(STORAGE_KEY), []);
+let settings = safeParse(localStorage.getItem(SETTINGS_KEY), {rate:0});
+let payments = []; // payment history is kept inside each customer's record for offline use
+
+function safeParse(s, fallback){try{return s?JSON.parse(s):fallback}catch(e){return fallback}}
+function money(n){return "₹"+(Number(n||0)).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function num(id){const v=Number($(id).value||0);return Number.isFinite(v)?v:0}
+function paise(v){return Math.round((Number(v)||0)*100)}
+function rupees(p){return p/100}
+function calc(x){
+  const insurance=paise(x.acres*x.rate);
+  const total=insurance+paise(x.printing)+paise(x.xerox)+paise(x.other);
+  const paid=(x.payments||[]).reduce((s,p)=>s+paise(p.amount),0);
+  const pending=Math.max(0,total-paid);
+  const status=pending===0?"PAID":paid===0?"PENDING":"PARTIALLY_PAID";
+  return {insurance:rupees(insurance),total:rupees(total),paid:rupees(paid),pending:rupees(pending),status};
+}
+function formData(){
+ return {name:$("name").value.trim(),phone:$("phone").value.trim(),acres:num("acres"),rate:num("rate"),printing:num("printing"),xerox:num("xerox"),other:num("other")};
+}
+function preview(){
+ const x=formData(); const c=calc({...x,payments:[]});
+ const paidNow=Math.max(0,num("paidNow"));
+ $("insuranceTotal").textContent=money(c.insurance);
+ $("totalAmount").textContent=money(c.total);
+ const existing=$("editId").value?customers.find(cu=>cu.id===$("editId").value):null;
+ const paidBefore=existing?calc(existing).paid:0;
+ const paid=paidBefore+paidNow;
+ $("paidTotal").textContent=money(paid);
+ $("pendingAmount").textContent=money(Math.max(0,c.total-paid));
+ $("statusText").textContent=Math.max(0,c.total-paid)===0?"PAID":paid===0?"PENDING":"PARTIALLY PAID";
+}
+["acres","rate","printing","xerox","other","paidNow"].forEach(id=>$(id).addEventListener("input",preview));
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(customers));localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));render()}
+function resetForm(){
+ $("customerForm").reset();$("editId").value="";$("acres").value="1";$("rate").value=Number(settings.rate||0);["printing","xerox","other","paidNow"].forEach(id=>$(id).value="0");
+ $("formTitle").textContent="Add Customer / Bill";$("saveBtn").textContent="Save Customer";preview();
+}
+$("resetBtn").addEventListener("click",resetForm);
+$("settingsBtn").addEventListener("click",()=>{
+ const current=Number(settings.rate||0);
+ const v=prompt("Set default insurance rate per acre (₹). Existing customer bills will not change.",String(current));
+ if(v===null)return; const n=Number(v);
+ if(!Number.isFinite(n)||n<0){alert("Enter a valid non-negative rate.");return}
+ settings.rate=n;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
+ if(!$("editId").value)$("rate").value=n;
+ preview();alert("Default insurance rate saved.");
+});
+$("customerForm").addEventListener("submit",e=>{
+ e.preventDefault();
+ const x=formData();
+ if(!x.name||!x.phone){alert("Customer name and contact number are required.");return}
+ if(x.acres<=0||[x.rate,x.printing,x.xerox,x.other,num("paidNow")].some(n=>n<0)){alert("Please check acreage and charge values.");return}
+ const id=$("editId").value;
+ let record=id?customers.find(c=>c.id===id):null;
+ const oldPaid=record?calc(record).paid:0;
+ const newTotal=calc({...x,payments:[]}).total;
+ const paidNow=num("paidNow");
+ if(paidNow>Math.max(0,newTotal-oldPaid)){alert("Payment cannot exceed the remaining bill amount.");return}
+ if(record){
+   record.name=x.name;record.phone=x.phone;record.acres=x.acres;record.rate=x.rate;
+   record.printing=x.printing;record.xerox=x.xerox;record.other=x.other;record.updatedAt=new Date().toISOString();
+ }else{
+   record={...x,id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+"-"+Math.random().toString(16).slice(2),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),payments:[]};
+   customers.unshift(record);
+ }
+ if(paidNow>0)record.payments.push({id:String(Date.now()),amount:paidNow,date:new Date().toISOString(),method:"Not specified"});
+ save();resetForm();alert("Customer record saved on this device.");
+});
+function editCustomer(id){
+ const c=customers.find(x=>x.id===id);if(!c)return;
+ $("editId").value=c.id;["name","phone","acres","rate","printing","xerox","other"].forEach(k=>$(k).value=c[k]??"");
+ $("paidNow").value="0";$("formTitle").textContent="Edit Customer";$("saveBtn").textContent="Save Changes";preview();window.scrollTo({top:0,behavior:"smooth"});
+}
+function addPayment(id){
+ const c=customers.find(x=>x.id===id);if(!c)return;
+ const balance=calc(c).pending;
+ if(balance<=0){alert("This bill is already fully paid.");return}
+ const v=prompt("Remaining balance: "+money(balance)+"\nEnter new payment amount (₹):");
+ if(v===null)return;const amount=Number(v);
+ if(!Number.isFinite(amount)||amount<=0||paise(amount)>paise(balance)){alert("Enter a valid payment up to "+money(balance));return}
+ const method=prompt("Payment method: Cash / UPI / Bank Transfer / Other","Cash")||"Other";
+ c.payments.push({id:String(Date.now())+"-"+Math.random().toString(16).slice(2),amount,date:new Date().toISOString(),method});
+ c.updatedAt=new Date().toISOString();save();
+}
+function receiptFor(id){
+ const c=customers.find(x=>x.id===id);if(!c)return;const t=calc(c);
+ const rows=(c.payments||[]).map(p=>`<tr><td>${escapeHtml(new Date(p.date).toLocaleString("en-IN"))}</td><td>${escapeHtml(p.method||"")}</td><td>${money(p.amount)}</td></tr>`).join("");
+ $("receipt").innerHTML=`<h2>Vivasaya Sevai Kanakku — Account Receipt</h2>
+ <p><b>Customer:</b> ${escapeHtml(c.name)}<br><b>Contact:</b> ${escapeHtml(c.phone)}<br><b>Receipt generated:</b> ${escapeHtml(new Date().toLocaleString("en-IN"))}</p>
+ <table style="width:100%;border-collapse:collapse" border="1" cellpadding="7">
+ <tr><td>Number of acres</td><td>${c.acres}</td></tr><tr><td>Insurance rate per acre</td><td>${money(c.rate)}</td></tr>
+ <tr><td>Insurance total</td><td>${money(t.insurance)}</td></tr><tr><td>Printing</td><td>${money(c.printing)}</td></tr>
+ <tr><td>Xerox</td><td>${money(c.xerox)}</td></tr><tr><td>Other charges</td><td>${money(c.other)}</td></tr>
+ <tr><th>Total bill</th><th>${money(t.total)}</th></tr><tr><td>Total paid</td><td>${money(t.paid)}</td></tr><tr><th>Pending</th><th>${money(t.pending)}</th></tr></table>
+ <h3>Payment history</h3><table style="width:100%;border-collapse:collapse" border="1" cellpadding="7"><tr><th>Date</th><th>Method</th><th>Amount</th></tr>${rows||"<tr><td colspan='3'>No payments recorded</td></tr>"}</table>
+ <p><b>Status:</b> ${t.status.replace("_"," ")}</p><div class="actions no-print"><button onclick="window.print()">Print / Save as PDF</button><button class="secondary" onclick="closeReceipt()">Close</button></div>`;
+ $("receipt").classList.remove("hidden");$("receipt").scrollIntoView({behavior:"smooth"});
+}
+function closeReceipt(){$("receipt").classList.add("hidden")}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function deleteCustomer(id){
+ if(!confirm("Delete this customer and their local billing/payment history? Export a backup first if needed."))return;
+ customers=customers.filter(c=>c.id!==id);save();
+}
+function render(){
+ $("count").textContent=customers.length;
+ const sums=customers.reduce((a,c)=>{const t=calc(c);a.billed+=paise(t.total);a.collected+=paise(t.paid);a.pending+=paise(t.pending);return a},{billed:0,collected:0,pending:0});
+ $("billed").textContent=money(rupees(sums.billed));$("collected").textContent=money(rupees(sums.collected));$("pending").textContent=money(rupees(sums.pending));
+ const q=$("search").value.trim().toLowerCase(),filter=$("statusFilter").value;
+ const list=customers.filter(c=>(c.name.toLowerCase().includes(q)||c.phone.toLowerCase().includes(q))&&(filter==="ALL"||calc(c).status===filter));
+ $("customerList").innerHTML=list.length?list.map(c=>{const t=calc(c);return `<article class="customer">
+ <div class="customer-top"><div><h3>${escapeHtml(c.name)}</h3><div class="muted">${escapeHtml(c.phone)} • ${c.acres} acre(s)</div></div><span class="badge ${t.status}">${t.status.replace("_"," ")}</span></div>
+ <div class="amounts"><div>Total<b>${money(t.total)}</b></div><div>Paid<b>${money(t.paid)}</b></div><div>Pending<b>${money(t.pending)}</b></div></div>
+ <div class="actions no-print"><button onclick="addPayment('${c.id}')">Add Payment</button><button class="secondary" onclick="receiptFor('${c.id}')">Receipt / Print</button><button class="secondary" onclick="editCustomer('${c.id}')">Edit</button><button class="danger" onclick="deleteCustomer('${c.id}')">Delete</button></div>
+ </article>`}).join(""):'<div class="panel empty">No customers found. Add your first customer above.</div>';
+}
+$("search").addEventListener("input",render);$("statusFilter").addEventListener("change",render);
+$("exportBtn").addEventListener("click",()=>{
+ const data={app:"Vivasaya Sevai Kanakku",version:1,exportedAt:new Date().toISOString(),settings,customers};
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="vivasaya-sevai-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(url);
+});
+$("importBtn").addEventListener("click",()=>$("importFile").click());
+$("importFile").addEventListener("change",async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{const data=JSON.parse(await file.text());if(!Array.isArray(data.customers))throw new Error("Invalid backup");
+ if(!confirm("Import backup? This will replace the customer records currently stored on this device."))return;
+ customers=data.customers;settings=data.settings||{rate:0};save();resetForm();alert("Backup imported successfully.");
+ }catch(err){alert("Could not import this backup file.");}finally{e.target.value=""}
+});
+$("rate").value=Number(settings.rate||0);
+preview();render();
+</script>
+</body>
+</html>
